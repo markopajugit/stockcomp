@@ -50,6 +50,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         }
                                         if (context.parsed.y !== null) {
                                             label += context.parsed.y + '%';
+                                            
+                                            // Add monthly gain if available
+                                            const monthlyGain = context.dataset.monthlyGains[context.dataIndex];
+                                            if (monthlyGain !== undefined && monthlyGain !== null) {
+                                                const gainValue = parseFloat(monthlyGain);
+                                                const sign = gainValue >= 0 ? '+' : '';
+                                                label += ` (${sign}${gainValue.toFixed(2)}% this month)`;
+                                            }
                                         }
                                         return label;
                                     }

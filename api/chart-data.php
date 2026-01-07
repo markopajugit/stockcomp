@@ -44,20 +44,22 @@ foreach ($period as $dt) {
 $datasets = [];
 foreach ($users as $user) {
     $data = [];
+    $monthlyGains = [];
     $cumulative = 100.0; // Starting at 100 (index)
     
     foreach ($timeline as $t) {
-        $found_gain = 0;
+        $found_gain = 0.0;
         if (isset($user_entries[$user['id']])) {
             foreach ($user_entries[$user['id']] as $e) {
                 if ($e['year'] == $t['year'] && $e['month'] == $t['month']) {
-                    $found_gain = $e['gain_percent'];
+                    $found_gain = (float)$e['gain_percent'];
                     break;
                 }
             }
         }
         $cumulative *= (1 + ($found_gain / 100));
         $data[] = round($cumulative - 100, 2); // % return from start
+        $monthlyGains[] = $found_gain;
     }
 
     $datasets[] = [
@@ -65,6 +67,7 @@ foreach ($users as $user) {
         'borderColor' => $user['color'],
         'backgroundColor' => $user['color'] . '33', // 20% opacity
         'data' => $data,
+        'monthlyGains' => $monthlyGains,
         'fill' => false,
         'tension' => 0.1
     ];
