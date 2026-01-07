@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             if (monthlyGain !== undefined && monthlyGain !== null) {
                                                 const gainValue = parseFloat(monthlyGain);
                                                 const sign = gainValue >= 0 ? '+' : '';
-                                                label += ` (${sign}${gainValue.toFixed(2)}% this month)`;
+                                                label += ` (${sign}${gainValue.toFixed(2)}% ${context.dataset.isPrediction ? 'predicted' : 'actual'})`;
                                             }
                                         }
                                         return label;
