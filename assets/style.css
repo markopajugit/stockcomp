@@ -197,7 +197,15 @@ input:focus, select:focus, textarea:focus {
 
 /* Chart */
 .chart-container {
-    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    min-height: 0;
 }
 
 .alert {

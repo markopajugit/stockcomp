@@ -118,12 +118,14 @@ $months = [
 
             <section class="card chart-container">
                 <h2>Performance Over Time</h2>
-                <canvas id="performanceChart"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="performanceChart"></canvas>
+                </div>
             </section>
         </div>
 
         <section class="card recent-entries">
-            <h2>Recent Comments</h2>
+            <h2>Recent Entries</h2>
             <div class="entries-list">
                 <?php foreach ($recent_entries as $entry): ?>
                     <div class="entry-item">
