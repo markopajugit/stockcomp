@@ -98,11 +98,22 @@ $months = [
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($leaderboard as $index => $row): ?>
+                        <?php 
+                        $count = count($leaderboard);
+                        foreach ($leaderboard as $index => $row): 
+                            $icon = '';
+                            if ($index === 0) {
+                                $icon = '🥇 ';
+                            } elseif ($count > 1 && $index === $count - 1) {
+                                $icon = '💩 ';
+                            } elseif ($count > 2 && $index === floor($count / 2)) {
+                                $icon = '🥈 ';
+                            }
+                        ?>
                             <tr>
                                 <td><?= $index + 1 ?></td>
                                 <td style="color: <?= $row['color'] ?>; font-weight: bold;">
-                                    <?= htmlspecialchars($row['name']) ?>
+                                    <?= $icon ?><?= htmlspecialchars($row['name']) ?>
                                 </td>
                                 <td class="<?= $row['ytd'] >= 0 ? 'pos' : 'neg' ?>">
                                     <?= number_format($row['ytd'], 2) ?>%
