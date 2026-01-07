@@ -216,6 +216,16 @@ input:focus, select:focus, textarea:focus {
 .alert-success { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
 .alert-danger { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
 
+.badge-prediction {
+    background-color: var(--accent-color);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
 .history-month {
     margin-bottom: 30px;
 }

@@ -7,7 +7,7 @@ $stmt = $pdo->query("SELECT id, name, color FROM users ORDER BY id ASC");
 $users = $stmt->fetchAll();
 
 // Fetch all entries ordered by time
-$stmt = $pdo->query("SELECT * FROM entries ORDER BY year ASC, month ASC");
+$stmt = $pdo->query("SELECT * FROM entries WHERE entry_type = 'actual' ORDER BY year ASC, month ASC");
 $entries = $stmt->fetchAll();
 
 // Group entries by user

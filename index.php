@@ -8,7 +8,7 @@ $stmt = $pdo->query("SELECT * FROM users ORDER BY name ASC");
 $users = $stmt->fetchAll();
 
 // Fetch all entries for current year to calculate YTD
-$stmt = $pdo->prepare("SELECT user_id, month, gain_percent FROM entries WHERE year = ?");
+$stmt = $pdo->prepare("SELECT user_id, month, gain_percent FROM entries WHERE year = ? AND entry_type = 'actual'");
 $stmt->execute([$current_year]);
 $ytd_entries = $stmt->fetchAll();
 
@@ -18,7 +18,7 @@ $stmt = $pdo->query("
     FROM entries e 
     JOIN users u ON e.user_id = u.id 
     ORDER BY e.year DESC, e.month DESC, e.created_at DESC 
-    LIMIT 10
+    LIMIT 15
 ");
 $recent_entries = $stmt->fetchAll();
 
@@ -35,8 +35,8 @@ foreach ($users as $user) {
         }
     }
     
-    // All-time (Fetch all for this user)
-    $stmt = $pdo->prepare("SELECT gain_percent FROM entries WHERE user_id = ?");
+    // All-time (Fetch only actual for this user)
+    $stmt = $pdo->prepare("SELECT gain_percent FROM entries WHERE user_id = ? AND entry_type = 'actual'");
     $stmt->execute([$user['id']]);
     $all_entries = $stmt->fetchAll();
     
@@ -143,6 +143,9 @@ $months = [
                         <div class="entry-meta">
                             <span class="entry-user" style="color: <?= $entry['color'] ?>"><?= htmlspecialchars($entry['name']) ?></span>
                             <span class="entry-date"><?= $months[$entry['month']] ?> <?= $entry['year'] ?></span>
+                            <?php if ($entry['entry_type'] === 'prediction'): ?>
+                                <span class="badge badge-prediction">Prediction</span>
+                            <?php endif; ?>
                             <span class="entry-gain <?= $entry['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
                                 <?= $entry['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($entry['gain_percent'], 2) ?>%
                             </span>

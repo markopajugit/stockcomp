@@ -10,11 +10,12 @@ CREATE TABLE IF NOT EXISTS entries (
     user_id INT NOT NULL,
     year INT NOT NULL,
     month INT NOT NULL,
+    entry_type ENUM('actual', 'prediction') DEFAULT 'actual',
     gain_percent DECIMAL(10,2) NOT NULL,
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_entry (user_id, year, month)
+    UNIQUE KEY unique_entry (user_id, year, month, entry_type)
 );
 

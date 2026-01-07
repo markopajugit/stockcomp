@@ -54,6 +54,7 @@ foreach ($entries as $e) {
                             <thead>
                                 <tr>
                                     <th>User</th>
+                                    <th>Type</th>
                                     <th>Gain %</th>
                                     <th>Comment</th>
                                     <th>Actions</th>
@@ -65,6 +66,13 @@ foreach ($entries as $e) {
                                         <td style="color: <?= $item['color'] ?>; font-weight: bold;">
                                             <?= htmlspecialchars($item['name']) ?>
                                         </td>
+                                        <td>
+                                            <?php if ($item['entry_type'] === 'prediction'): ?>
+                                                <span class="badge badge-prediction">Prediction</span>
+                                            <?php else: ?>
+                                                <span style="font-size: 0.8rem; opacity: 0.7;">Actual</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="<?= $item['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
                                             <?= $item['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($item['gain_percent'], 2) ?>%
                                         </td>
@@ -72,7 +80,7 @@ foreach ($entries as $e) {
                                             <?= htmlspecialchars($item['comment']) ?>
                                         </td>
                                         <td>
-                                            <a href="add-entry.php?user_id=<?= $item['user_id'] ?>&year=<?= $item['year'] ?>&month=<?= $item['month'] ?>" class="btn btn-small">Edit</a>
+                                            <a href="add-entry.php?user_id=<?= $item['user_id'] ?>&year=<?= $item['year'] ?>&month=<?= $item['month'] ?>&entry_type=<?= $item['entry_type'] ?>" class="btn btn-small">Edit</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

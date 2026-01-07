@@ -11,13 +11,14 @@ $users = $stmt->fetchAll();
 $user_id = $_POST['user_id'] ?? $_GET['user_id'] ?? null;
 $year = $_POST['year'] ?? $_GET['year'] ?? date('Y');
 $month = $_POST['month'] ?? $_GET['month'] ?? date('n');
+$entry_type = $_POST['entry_type'] ?? $_GET['entry_type'] ?? 'actual';
 
 // If editing, fetch existing entry
 $existing_gain = '';
 $existing_comment = '';
 if ($user_id && $year && $month) {
-    $stmt = $pdo->prepare("SELECT gain_percent, comment FROM entries WHERE user_id = ? AND year = ? AND month = ?");
-    $stmt->execute([$user_id, $year, $month]);
+    $stmt = $pdo->prepare("SELECT gain_percent, comment FROM entries WHERE user_id = ? AND year = ? AND month = ? AND entry_type = ?");
+    $stmt->execute([$user_id, $year, $month, $entry_type]);
     $entry = $stmt->fetch();
     if ($entry) {
         $existing_gain = $entry['gain_percent'];
@@ -28,6 +29,7 @@ if ($user_id && $year && $month) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gain = $_POST['gain_percent'] ?? 0;
     $comment = trim($_POST['comment'] ?? '');
+    $entry_type = $_POST['entry_type'] ?? 'actual';
 
     if (!$user_id) {
         $error = "User is required.";
@@ -35,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Upsert entry
             $stmt = $pdo->prepare("
-                INSERT INTO entries (user_id, year, month, gain_percent, comment) 
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO entries (user_id, year, month, entry_type, gain_percent, comment) 
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 gain_percent = VALUES(gain_percent), 
                 comment = VALUES(comment)
             ");
-            $stmt->execute([$user_id, $year, $month, $gain, $comment]);
+            $stmt->execute([$user_id, $year, $month, $entry_type, $gain, $comment]);
             $message = "Entry saved successfully!";
             $existing_gain = $gain;
             $existing_comment = $comment;
@@ -102,6 +104,13 @@ $months = [
                     <div class="form-group col">
                         <label for="year">Year</label>
                         <input type="number" id="year" name="year" value="<?= $year ?>" min="2020" max="2100">
+                    </div>
+                    <div class="form-group col">
+                        <label for="entry_type">Type</label>
+                        <select id="entry_type" name="entry_type">
+                            <option value="actual" <?= $entry_type == 'actual' ? 'selected' : '' ?>>Actual Results</option>
+                            <option value="prediction" <?= $entry_type == 'prediction' ? 'selected' : '' ?>>Prediction</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group">
