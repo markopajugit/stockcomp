@@ -10,7 +10,6 @@ A competitive stock portfolio tracking app where participants log their monthly 
 - **Leaderboard** — Real-time rankings by YTD (Year-to-Date) and all-time compound returns
 - **Performance Chart** — Interactive Chart.js visualization of cumulative returns over time
 - **Monthly Entries** — Users submit their portfolio gain % each month with optional commentary
-- **PIN Authentication** — Simple PIN-based security for entry submission
 - **History View** — Browse all entries grouped by month
 - **Dark Theme** — Modern dark UI with green/red gain indicators
 
@@ -43,7 +42,6 @@ Or manually execute:
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    pin_hash VARCHAR(255) NOT NULL,
     color VARCHAR(7) DEFAULT '#3498db',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -96,8 +94,7 @@ stockcomp/
 ├── db.php              # PDO database connection
 ├── setup.sql           # Database schema
 ├── api/
-│   ├── chart-data.php  # JSON endpoint for Chart.js data
-│   └── verify-pin.php  # PIN verification endpoint
+│   └── chart-data.php  # JSON endpoint for Chart.js data
 └── assets/
     ├── style.css       # Dark theme styles
     └── app.js          # Chart.js initialization
@@ -108,17 +105,15 @@ stockcomp/
 ### Adding a Participant
 
 1. Click **Add User** on the dashboard
-2. Enter name, choose a color, and set a PIN
-3. The PIN is required when submitting entries
+2. Enter name and choose a color
 
 ### Submitting Monthly Gains
 
 1. Click **Add Entry**
 2. Select your name from the dropdown
-3. Enter your PIN
-4. Choose the month/year
-5. Enter your gain percentage (e.g., `5.25` or `-2.1`)
-6. Optionally add a comment about your trades
+3. Choose the month/year
+4. Enter your gain percentage (e.g., `5.25` or `-2.1`)
+5. Optionally add a comment about your trades
 
 ### Viewing Performance
 

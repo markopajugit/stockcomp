@@ -26,37 +26,27 @@ if ($user_id && $year && $month) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pin = $_POST['pin'] ?? '';
     $gain = $_POST['gain_percent'] ?? 0;
     $comment = trim($_POST['comment'] ?? '');
 
-    if (!$user_id || empty($pin)) {
-        $error = "User and PIN are required.";
+    if (!$user_id) {
+        $error = "User is required.";
     } else {
-        // Verify PIN
-        $stmt = $pdo->prepare("SELECT pin_hash FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($pin, $user['pin_hash'])) {
-            try {
-                // Upsert entry
-                $stmt = $pdo->prepare("
-                    INSERT INTO entries (user_id, year, month, gain_percent, comment) 
-                    VALUES (?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE 
-                    gain_percent = VALUES(gain_percent), 
-                    comment = VALUES(comment)
-                ");
-                $stmt->execute([$user_id, $year, $month, $gain, $comment]);
-                $message = "Entry saved successfully!";
-                $existing_gain = $gain;
-                $existing_comment = $comment;
-            } catch (PDOException $e) {
-                $error = "Error: " . $e->getMessage();
-            }
-        } else {
-            $error = "Incorrect PIN.";
+        try {
+            // Upsert entry
+            $stmt = $pdo->prepare("
+                INSERT INTO entries (user_id, year, month, gain_percent, comment) 
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                gain_percent = VALUES(gain_percent), 
+                comment = VALUES(comment)
+            ");
+            $stmt->execute([$user_id, $year, $month, $gain, $comment]);
+            $message = "Entry saved successfully!";
+            $existing_gain = $gain;
+            $existing_comment = $comment;
+        } catch (PDOException $e) {
+            $error = "Error: " . $e->getMessage();
         }
     }
 }
@@ -99,10 +89,6 @@ $months = [
                             <option value="<?= $u['id'] ?>" <?= $u['id'] == $user_id ? 'selected' : '' ?>><?= htmlspecialchars($u['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="pin">Your PIN</label>
-                    <input type="password" id="pin" name="pin" required placeholder="Enter PIN to verify">
                 </div>
                 <div class="row">
                     <div class="form-group col">

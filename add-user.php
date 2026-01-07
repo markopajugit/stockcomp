@@ -6,16 +6,14 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
-    $pin = $_POST['pin'] ?? '';
     $color = $_POST['color'] ?? '#3498db';
 
-    if (empty($name) || empty($pin)) {
-        $error = "Name and PIN are required.";
+    if (empty($name)) {
+        $error = "Name is required.";
     } else {
         try {
-            $pin_hash = password_hash($pin, PASSWORD_BCRYPT);
-            $stmt = $pdo->prepare("INSERT INTO users (name, pin_hash, color) VALUES (?, ?, ?)");
-            $stmt->execute([$name, $pin_hash, $color]);
+            $stmt = $pdo->prepare("INSERT INTO users (name, color) VALUES (?, ?)");
+            $stmt->execute([$name, $color]);
             $message = "User registered successfully!";
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) {
@@ -54,10 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" required placeholder="e.g. Mike">
-                </div>
-                <div class="form-group">
-                    <label for="pin">Personal PIN (for security)</label>
-                    <input type="password" id="pin" name="pin" required maxlength="8" placeholder="Enter a PIN">
                 </div>
                 <div class="form-group">
                     <label for="color">Chart Color</label>
