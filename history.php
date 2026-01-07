@@ -16,12 +16,28 @@ $months = [
     9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
 ];
 
-// Group by month for easier browsing
+// Group by month and user for pairing predictions with actuals
 $grouped_entries = [];
 foreach ($entries as $e) {
     $key = $e['year'] . '-' . $e['month'];
-    $grouped_entries[$key]['label'] = $months[$e['month']] . ' ' . $e['year'];
-    $grouped_entries[$key]['items'][] = $e;
+    if (!isset($grouped_entries[$key])) {
+        $grouped_entries[$key] = [
+            'label' => $months[$e['month']] . ' ' . $e['year'],
+            'users' => []
+        ];
+    }
+    
+    $userId = $e['user_id'];
+    if (!isset($grouped_entries[$key]['users'][$userId])) {
+        $grouped_entries[$key]['users'][$userId] = [
+            'name' => $e['name'],
+            'color' => $e['color'],
+            'actual' => null,
+            'prediction' => null
+        ];
+    }
+    
+    $grouped_entries[$key]['users'][$userId][$e['entry_type']] = $e;
 }
 ?>
 <!DOCTYPE html>
@@ -54,33 +70,73 @@ foreach ($entries as $e) {
                             <thead>
                                 <tr>
                                     <th>User</th>
-                                    <th>Type</th>
-                                    <th>Gain %</th>
+                                    <th>Actual %</th>
+                                    <th>Predicted %</th>
+                                    <th>Accuracy / Diff</th>
                                     <th>Comment</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($month_data['items'] as $item): ?>
+                                <?php foreach ($month_data['users'] as $userId => $data): 
+                                    $actual = $data['actual'];
+                                    $pred = $data['prediction'];
+                                    $diff = null;
+                                    if ($actual && $pred) {
+                                        $diff = $actual['gain_percent'] - $pred['gain_percent'];
+                                    }
+                                ?>
                                     <tr>
-                                        <td style="color: <?= $item['color'] ?>; font-weight: bold;">
-                                            <?= htmlspecialchars($item['name']) ?>
+                                        <td style="color: <?= $data['color'] ?>; font-weight: bold;">
+                                            <?= htmlspecialchars($data['name']) ?>
                                         </td>
                                         <td>
-                                            <?php if ($item['entry_type'] === 'prediction'): ?>
-                                                <span class="badge badge-prediction">Prediction</span>
+                                            <?php if ($actual): ?>
+                                                <span class="<?= $actual['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
+                                                    <?= $actual['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($actual['gain_percent'], 2) ?>%
+                                                </span>
                                             <?php else: ?>
-                                                <span style="font-size: 0.8rem; opacity: 0.7;">Actual</span>
+                                                <span class="muted-text">—</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="<?= $item['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
-                                            <?= $item['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($item['gain_percent'], 2) ?>%
-                                        </td>
-                                        <td class="comment-cell">
-                                            <?= htmlspecialchars($item['comment']) ?>
+                                        <td>
+                                            <?php if ($pred): ?>
+                                                <span class="<?= $pred['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
+                                                    <?= $pred['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($pred['gain_percent'], 2) ?>%
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="muted-text">—</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
-                                            <a href="add-entry.php?user_id=<?= $item['user_id'] ?>&year=<?= $item['year'] ?>&month=<?= $item['month'] ?>&entry_type=<?= $item['entry_type'] ?>" class="btn btn-small">Edit</a>
+                                            <?php if ($diff !== null): 
+                                                $absDiff = abs($diff);
+                                                $accuracyClass = $absDiff <= 1 ? 'accuracy-high' : ($absDiff <= 5 ? 'accuracy-medium' : 'accuracy-low');
+                                            ?>
+                                                <span class="diff-badge <?= $accuracyClass ?>">
+                                                    <?= $diff > 0 ? '+' : '' ?><?= number_format($diff, 2) ?>%
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="muted-text">—</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="comment-cell">
+                                            <?php 
+                                                $comments = [];
+                                                if ($actual && $actual['comment']) $comments[] = "Actual: " . htmlspecialchars($actual['comment']);
+                                                if ($pred && $pred['comment']) $comments[] = "Pred: " . htmlspecialchars($pred['comment']);
+                                                echo implode('<br>', $comments);
+                                            ?>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <?php if ($actual): ?>
+                                                    <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $actual['year'] ?>&month=<?= $actual['month'] ?>&entry_type=actual" class="btn btn-small">Edit Actual</a>
+                                                <?php endif; ?>
+                                                <?php if ($pred): ?>
+                                                    <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $pred['year'] ?>&month=<?= $pred['month'] ?>&entry_type=prediction" class="btn btn-small btn-outline">Edit Pred</a>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

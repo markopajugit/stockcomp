@@ -242,3 +242,24 @@ input:focus, select:focus, textarea:focus {
     color: var(--muted-text);
 }
 
+.diff-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.accuracy-high { background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+.accuracy-medium { background-color: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+.accuracy-low { background-color: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.muted-text {
+    color: var(--muted-text);
+    opacity: 0.5;
+}
+

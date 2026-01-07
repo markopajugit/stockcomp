@@ -12,9 +12,10 @@ $stmt = $pdo->prepare("SELECT user_id, month, gain_percent FROM entries WHERE ye
 $stmt->execute([$current_year]);
 $ytd_entries = $stmt->fetchAll();
 
-// Fetch recent entries
+// Fetch recent entries with potential prediction pairing
 $stmt = $pdo->query("
-    SELECT e.*, u.name, u.color 
+    SELECT e.*, u.name, u.color,
+    (SELECT gain_percent FROM entries e2 WHERE e2.user_id = e.user_id AND e2.year = e.year AND e2.month = e.month AND e2.entry_type = 'prediction' LIMIT 1) as predicted_gain
     FROM entries e 
     JOIN users u ON e.user_id = u.id 
     ORDER BY e.year DESC, e.month DESC, e.created_at DESC 
@@ -149,6 +150,16 @@ $months = [
                             <span class="entry-gain <?= $entry['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
                                 <?= $entry['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($entry['gain_percent'], 2) ?>%
                             </span>
+                            
+                            <?php if ($entry['entry_type'] === 'actual' && $entry['predicted_gain'] !== null): 
+                                $diff = $entry['gain_percent'] - $entry['predicted_gain'];
+                                $absDiff = abs($diff);
+                                $accuracyClass = $absDiff <= 1 ? 'accuracy-high' : ($absDiff <= 5 ? 'accuracy-medium' : 'accuracy-low');
+                            ?>
+                                <span class="diff-badge <?= $accuracyClass ?>" title="Difference from prediction (<?= number_format($entry['predicted_gain'], 2) ?>%)">
+                                    Diff: <?= $diff > 0 ? '+' : '' ?><?= number_format($diff, 2) ?>%
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <?php if ($entry['comment']): ?>
                             <p class="entry-comment">"<?= htmlspecialchars($entry['comment']) ?>"</p>

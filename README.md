@@ -9,6 +9,7 @@ A competitive stock portfolio tracking app where participants log their monthly 
 
 - **Leaderboard** — Real-time rankings by YTD (Year-to-Date) and all-time compound returns
 - **Performance Chart** — Interactive Chart.js visualization of cumulative returns (Actuals + Predictions)
+- **Prediction Accuracy** — Automatically calculates and displays the difference between predicted and actual results on the Dashboard and History views.
 - **Monthly Entries** — Users submit their portfolio gain % (Actual or Prediction) with optional commentary
 - **History View** — Browse all entries grouped by month
 - **Dark Theme** — Modern dark UI with green/red gain indicators
