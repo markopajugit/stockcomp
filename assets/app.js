@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             });
+    }
+
     // Entry Form Logic
     const entryForm = document.querySelector('form[method="POST"]');
     if (entryForm) {
