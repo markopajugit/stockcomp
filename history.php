@@ -71,91 +71,93 @@ $scores = calculateScores($pdo);
                 <section class="history-month">
                     <h2 class="month-title"><?= $month_data['label'] ?></h2>
                     <div class="card">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Actual %</th>
-                                    <th>Predicted %</th>
-                                    <th>Points</th>
-                                    <th>Comment</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($month_data['users'] as $userId => $data): 
-                                    if ($data['name'] === MARKET_USER_NAME) continue;
-
-                                    $actual = $data['actual'];
-                                    $pred = $data['prediction'];
-                                    $month_key = $month_data['year'] . '-' . $month_data['month'];
-                                    $score_detail = $scores[$userId]['details'][$month_key] ?? null;
-                                ?>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
                                     <tr>
-                                        <td style="color: <?= $data['color'] ?>; font-weight: bold;">
-                                            <?= htmlspecialchars($data['name']) ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($actual): ?>
-                                                <span class="<?= $actual['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
-                                                    <?= $actual['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($actual['gain_percent'], 2) ?>%
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="muted-text">—</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($pred): ?>
-                                                <span class="<?= $pred['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
-                                                    <?= $pred['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($pred['gain_percent'], 2) ?>%
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="muted-text">—</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($score_detail): ?>
-                                                <div class="points-cell" title="Breakdown:
+                                        <th>User</th>
+                                        <th>Actual %</th>
+                                        <th>Predicted %</th>
+                                        <th>Points</th>
+                                        <th>Comment</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($month_data['users'] as $userId => $data): 
+                                        if ($data['name'] === MARKET_USER_NAME) continue;
+
+                                        $actual = $data['actual'];
+                                        $pred = $data['prediction'];
+                                        $month_key = $month_data['year'] . '-' . $month_data['month'];
+                                        $score_detail = $scores[$userId]['details'][$month_key] ?? null;
+                                    ?>
+                                        <tr>
+                                            <td style="color: <?= $data['color'] ?>; font-weight: bold;">
+                                                <?= htmlspecialchars($data['name']) ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($actual): ?>
+                                                    <span class="<?= $actual['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
+                                                        <?= $actual['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($actual['gain_percent'], 2) ?>%
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="muted-text">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($pred): ?>
+                                                    <span class="<?= $pred['gain_percent'] >= 0 ? 'pos' : 'neg' ?>">
+                                                        <?= $pred['gain_percent'] >= 0 ? '+' : '' ?><?= number_format($pred['gain_percent'], 2) ?>%
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="muted-text">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($score_detail): ?>
+                                                    <div class="points-cell" title="Breakdown:
 Gains: <?= number_format($score_detail['gain'], 1) ?>
 Pred: <?= number_format($score_detail['pred'], 1) ?>
 Market: <?= number_format($score_detail['market'], 1) ?>
 Winner: <?= number_format($score_detail['winner'], 1) ?>
 Underdog: <?= number_format($score_detail['underdog'], 1) ?>">
-                                                    <strong><?= number_format($score_detail['total'], 1) ?></strong>
-                                                    <div class="pts-breakdown-mini">
-                                                        G:<?= number_format($score_detail['gain'], 0) ?> 
-                                                        P:<?= number_format($score_detail['pred'], 0) ?> 
-                                                        <?= $score_detail['market'] ? 'M:+'.$score_detail['market'] : '' ?>
-                                                        <?= $score_detail['winner'] ? 'W:+'.$score_detail['winner'] : '' ?>
-                                                        <?= $score_detail['underdog'] ? 'U:+'.$score_detail['underdog'] : '' ?>
+                                                        <strong><?= number_format($score_detail['total'], 1) ?></strong>
+                                                        <div class="pts-breakdown-mini">
+                                                            G:<?= number_format($score_detail['gain'], 0) ?> 
+                                                            P:<?= number_format($score_detail['pred'], 0) ?> 
+                                                            <?= $score_detail['market'] ? 'M:+'.$score_detail['market'] : '' ?>
+                                                            <?= $score_detail['winner'] ? 'W:+'.$score_detail['winner'] : '' ?>
+                                                            <?= $score_detail['underdog'] ? 'U:+'.$score_detail['underdog'] : '' ?>
+                                                        </div>
                                                     </div>
+                                                <?php else: ?>
+                                                    <span class="muted-text">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="comment-cell">
+                                                <?php 
+                                                    $comments = [];
+                                                    if ($actual && $actual['comment']) $comments[] = "Actual: " . htmlspecialchars($actual['comment']);
+                                                    if ($pred && $pred['comment']) $comments[] = "Pred: " . htmlspecialchars($pred['comment']);
+                                                    echo implode('<br>', $comments);
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <?php if ($actual): ?>
+                                                        <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $actual['year'] ?>&month=<?= $actual['month'] ?>&entry_type=actual" class="btn btn-small">Edit Actual</a>
+                                                    <?php endif; ?>
+                                                    <?php if ($pred): ?>
+                                                        <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $pred['year'] ?>&month=<?= $pred['month'] ?>&entry_type=prediction" class="btn btn-small btn-outline">Edit Pred</a>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php else: ?>
-                                                <span class="muted-text">—</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="comment-cell">
-                                            <?php 
-                                                $comments = [];
-                                                if ($actual && $actual['comment']) $comments[] = "Actual: " . htmlspecialchars($actual['comment']);
-                                                if ($pred && $pred['comment']) $comments[] = "Pred: " . htmlspecialchars($pred['comment']);
-                                                echo implode('<br>', $comments);
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <?php if ($actual): ?>
-                                                    <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $actual['year'] ?>&month=<?= $actual['month'] ?>&entry_type=actual" class="btn btn-small">Edit Actual</a>
-                                                <?php endif; ?>
-                                                <?php if ($pred): ?>
-                                                    <a href="add-entry.php?user_id=<?= $userId ?>&year=<?= $pred['year'] ?>&month=<?= $pred['month'] ?>&entry_type=prediction" class="btn btn-small btn-outline">Edit Pred</a>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
             <?php endforeach; ?>

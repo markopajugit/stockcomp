@@ -111,52 +111,54 @@ $months = [
         <div class="grid">
             <section class="card leaderboard">
                 <h2>Leaderboard (YTD <?= $current_year ?>)</h2>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>User</th>
-                            <th>Score</th>
-                            <th>YTD %</th>
-                            <th>All-time %</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $count = count($leaderboard);
-                        foreach ($leaderboard as $index => $row): 
-                            $icon = '';
-                            if ($index === 0) {
-                                $icon = '🥇 ';
-                            } elseif ($count > 1 && $index === $count - 1) {
-                                $icon = '💩 ';
-                            } elseif ($count > 2 && $index === floor($count / 2)) {
-                                $icon = '🥈 ';
-                            }
-                        ?>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
                             <tr>
-                                <td><?= $index + 1 ?></td>
-                                <td style="color: <?= $row['color'] ?>; font-weight: bold;">
-                                    <?= $icon ?><?= htmlspecialchars($row['name']) ?>
-                                </td>
-                                <td style="font-weight: bold; color: #f1c40f; cursor: help;" title="Score Breakdown:
+                                <th>Rank</th>
+                                <th>User</th>
+                                <th>Score</th>
+                                <th>YTD %</th>
+                                <th>All-time %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $count = count($leaderboard);
+                            foreach ($leaderboard as $index => $row): 
+                                $icon = '';
+                                if ($index === 0) {
+                                    $icon = '🥇 ';
+                                } elseif ($count > 1 && $index === $count - 1) {
+                                    $icon = '💩 ';
+                                } elseif ($count > 2 && $index === floor($count / 2)) {
+                                    $icon = '🥈 ';
+                                }
+                            ?>
+                                <tr>
+                                    <td><?= $index + 1 ?></td>
+                                    <td style="color: <?= $row['color'] ?>; font-weight: bold;">
+                                        <?= $icon ?><?= htmlspecialchars($row['name']) ?>
+                                    </td>
+                                    <td style="font-weight: bold; color: #f1c40f; cursor: help;" title="Score Breakdown:
 Gains: <?= number_format($row['breakdown']['gain'], 1) ?>
 Predictions: <?= number_format($row['breakdown']['pred'], 1) ?>
 Market Beat: <?= number_format($row['breakdown']['market'], 1) ?>
 Winner: <?= number_format($row['breakdown']['winner'], 1) ?>
 Underdog: <?= number_format($row['breakdown']['underdog'], 1) ?>">
-                                    <?= number_format($row['score'], 0) ?>
-                                </td>
-                                <td class="<?= $row['ytd'] >= 0 ? 'pos' : 'neg' ?>">
-                                    <?= number_format($row['ytd'], 2) ?>%
-                                </td>
-                                <td class="<?= $row['all_time'] >= 0 ? 'pos' : 'neg' ?>">
-                                    <?= number_format($row['all_time'], 2) ?>%
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                        <?= number_format($row['score'], 0) ?>
+                                    </td>
+                                    <td class="<?= $row['ytd'] >= 0 ? 'pos' : 'neg' ?>">
+                                        <?= number_format($row['ytd'], 2) ?>%
+                                    </td>
+                                    <td class="<?= $row['all_time'] >= 0 ? 'pos' : 'neg' ?>">
+                                        <?= number_format($row['all_time'], 2) ?>%
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <section class="card chart-container">
