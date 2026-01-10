@@ -23,6 +23,8 @@ foreach ($entries as $e) {
     if (!isset($grouped_entries[$key])) {
         $grouped_entries[$key] = [
             'label' => $months[$e['month']] . ' ' . $e['year'],
+            'year' => $e['year'],
+            'month' => $e['month'],
             'users' => []
         ];
     }
@@ -39,6 +41,9 @@ foreach ($entries as $e) {
     
     $grouped_entries[$key]['users'][$userId][$e['entry_type']] = $e;
 }
+
+// Fetch scores for breakdown
+$scores = calculateScores($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,19 +77,19 @@ foreach ($entries as $e) {
                                     <th>User</th>
                                     <th>Actual %</th>
                                     <th>Predicted %</th>
-                                    <th>Accuracy / Diff</th>
+                                    <th>Points</th>
                                     <th>Comment</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($month_data['users'] as $userId => $data): 
+                                    if ($data['name'] === MARKET_USER_NAME) continue;
+
                                     $actual = $data['actual'];
                                     $pred = $data['prediction'];
-                                    $diff = null;
-                                    if ($actual && $pred) {
-                                        $diff = $actual['gain_percent'] - $pred['gain_percent'];
-                                    }
+                                    $month_key = $month_data['year'] . '-' . $month_data['month'];
+                                    $score_detail = $scores[$userId]['details'][$month_key] ?? null;
                                 ?>
                                     <tr>
                                         <td style="color: <?= $data['color'] ?>; font-weight: bold;">
@@ -109,13 +114,22 @@ foreach ($entries as $e) {
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php if ($diff !== null): 
-                                                $absDiff = abs($diff);
-                                                $accuracyClass = $absDiff <= 1 ? 'accuracy-high' : ($absDiff <= 5 ? 'accuracy-medium' : 'accuracy-low');
-                                            ?>
-                                                <span class="diff-badge <?= $accuracyClass ?>">
-                                                    <?= $diff > 0 ? '+' : '' ?><?= number_format($diff, 2) ?>%
-                                                </span>
+                                            <?php if ($score_detail): ?>
+                                                <div class="points-cell" title="Breakdown:
+Gains: <?= number_format($score_detail['gain'], 1) ?>
+Pred: <?= number_format($score_detail['pred'], 1) ?>
+Market: <?= number_format($score_detail['market'], 1) ?>
+Winner: <?= number_format($score_detail['winner'], 1) ?>
+Underdog: <?= number_format($score_detail['underdog'], 1) ?>">
+                                                    <strong><?= number_format($score_detail['total'], 1) ?></strong>
+                                                    <div class="pts-breakdown-mini">
+                                                        G:<?= number_format($score_detail['gain'], 0) ?> 
+                                                        P:<?= number_format($score_detail['pred'], 0) ?> 
+                                                        <?= $score_detail['market'] ? 'M:+'.$score_detail['market'] : '' ?>
+                                                        <?= $score_detail['winner'] ? 'W:+'.$score_detail['winner'] : '' ?>
+                                                        <?= $score_detail['underdog'] ? 'U:+'.$score_detail['underdog'] : '' ?>
+                                                    </div>
+                                                </div>
                                             <?php else: ?>
                                                 <span class="muted-text">—</span>
                                             <?php endif; ?>

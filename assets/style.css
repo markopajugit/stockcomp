@@ -263,3 +263,15 @@ input:focus, select:focus, textarea:focus {
     opacity: 0.5;
 }
 
+.pts-breakdown-mini {
+    font-size: 0.7rem;
+    color: var(--muted-text);
+    margin-top: 4px;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.points-cell {
+    cursor: help;
+}
+

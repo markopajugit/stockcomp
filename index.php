@@ -23,10 +23,18 @@ $stmt = $pdo->query("
 ");
 $recent_entries = $stmt->fetchAll();
 
+// Calculate scores using new engine
+$scores = calculateScores($pdo, $current_year);
+
 // Calculate YTD and All-time for each user
 $leaderboard = [];
 foreach ($users as $user) {
-    // YTD
+    if ($user['name'] === MARKET_USER_NAME) continue;
+
+    $uid = $user['id'];
+    $user_score_data = $scores[$uid] ?? ['total' => 0, 'ytd' => 0];
+
+    // YTD %
     $ytd_compound = 1.0;
     $has_ytd = false;
     foreach ($ytd_entries as $entry) {
@@ -36,7 +44,7 @@ foreach ($users as $user) {
         }
     }
     
-    // All-time (Fetch only actual for this user)
+    // All-time % (Fetch only actual for this user)
     $stmt = $pdo->prepare("SELECT gain_percent FROM entries WHERE user_id = ? AND entry_type = 'actual'");
     $stmt->execute([$user['id']]);
     $all_entries = $stmt->fetchAll();
@@ -53,11 +61,14 @@ foreach ($users as $user) {
         'color' => $user['color'],
         'ytd' => $has_ytd ? ($ytd_compound - 1) * 100 : 0,
         'all_time' => $has_all_time ? ($all_time_compound - 1) * 100 : 0,
+        'score' => $user_score_data['total'],
+        'ytd_score' => $user_score_data['ytd']
     ];
 }
 
-// Sort leaderboard by YTD descending
+// Sort leaderboard by Score descending
 usort($leaderboard, function($a, $b) {
+    if ($b['score'] != $a['score']) return $b['score'] <=> $a['score'];
     return $b['ytd'] <=> $a['ytd'];
 });
 
@@ -94,6 +105,7 @@ $months = [
                         <tr>
                             <th>Rank</th>
                             <th>User</th>
+                            <th>Score</th>
                             <th>YTD %</th>
                             <th>All-time %</th>
                         </tr>
@@ -115,6 +127,9 @@ $months = [
                                 <td><?= $index + 1 ?></td>
                                 <td style="color: <?= $row['color'] ?>; font-weight: bold;">
                                     <?= $icon ?><?= htmlspecialchars($row['name']) ?>
+                                </td>
+                                <td style="font-weight: bold; color: #f1c40f;">
+                                    <?= number_format($row['score'], 0) ?>
                                 </td>
                                 <td class="<?= $row['ytd'] >= 0 ? 'pos' : 'neg' ?>">
                                     <?= number_format($row['ytd'], 2) ?>%
