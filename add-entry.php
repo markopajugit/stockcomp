@@ -113,9 +113,28 @@ $months = [
                         </select>
                     </div>
                 </div>
+
                 <div class="form-group">
+                    <label>Input Type</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="input_mode" value="1m" checked> 1M (Monthly)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="input_mode" value="ytd"> YTD (Year-to-Date)
+                        </label>
+                    </div>
+                </div>
+
+                <div id="monthly_input_group" class="form-group">
                     <label for="gain_percent">Monthly Gain (%)</label>
                     <input type="number" step="0.01" id="gain_percent" name="gain_percent" value="<?= $existing_gain ?>" required placeholder="e.g. 5.25 or -2.1">
+                </div>
+
+                <div id="ytd_input_group" class="form-group" style="display: none;">
+                    <label for="ytd_gain">YTD Gain (%)</label>
+                    <input type="number" step="0.01" id="ytd_gain" name="ytd_gain" placeholder="e.g. 15.5">
+                    <small class="form-text text-muted">Monthly gain will be calculated automatically based on previous months in <?= $year ?>.</small>
                 </div>
                 <div class="form-group">
                     <label for="comment">Comments</label>
