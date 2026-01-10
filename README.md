@@ -135,6 +135,18 @@ For example, if you had +10% in January and +5% in February:
 YTD = (1.10 × 1.05) - 1 = 0.155 = 15.5%
 ```
 
+## How Scores are Calculated
+
+The app features a comprehensive scoring system that rewards both performance and prediction accuracy. Points are calculated monthly:
+
+1. **Gain Reward**: **+10 pts per 1%** monthly gain.
+2. **Prediction Accuracy**: **-1 pt per 1% miss** between your prediction and actual result.
+3. **Beat Market**: **+10 pts** if your gain is higher than the "Market" entry for that month.
+4. **Monthly Winner**: **+10 pts** for the user with the highest gain of the month.
+5. **Underdog Bonus**: **+5 pts** if the Monthly Winner was in last place on the all-time leaderboard before that month.
+
+Scores are aggregated across all months to determine the leaderboard ranking.
+
 ## License
 
 MIT License — use freely for your own investment competitions!

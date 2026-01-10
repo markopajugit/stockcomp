@@ -32,7 +32,17 @@ foreach ($users as $user) {
     if ($user['name'] === MARKET_USER_NAME) continue;
 
     $uid = $user['id'];
-    $user_score_data = $scores[$uid] ?? ['total' => 0, 'ytd' => 0];
+    $user_score_data = $scores[$uid] ?? ['total' => 0, 'ytd' => 0, 'details' => []];
+
+    // Calculate score breakdown for tooltip
+    $breakdown = ['gain' => 0, 'pred' => 0, 'market' => 0, 'winner' => 0, 'underdog' => 0];
+    foreach ($user_score_data['details'] as $month_detail) {
+        $breakdown['gain'] += $month_detail['gain'];
+        $breakdown['pred'] += $month_detail['pred'];
+        $breakdown['market'] += $month_detail['market'];
+        $breakdown['winner'] += $month_detail['winner'];
+        $breakdown['underdog'] += $month_detail['underdog'];
+    }
 
     // YTD %
     $ytd_compound = 1.0;
@@ -62,7 +72,8 @@ foreach ($users as $user) {
         'ytd' => $has_ytd ? ($ytd_compound - 1) * 100 : 0,
         'all_time' => $has_all_time ? ($all_time_compound - 1) * 100 : 0,
         'score' => $user_score_data['total'],
-        'ytd_score' => $user_score_data['ytd']
+        'ytd_score' => $user_score_data['ytd'],
+        'breakdown' => $breakdown
     ];
 }
 
@@ -128,7 +139,12 @@ $months = [
                                 <td style="color: <?= $row['color'] ?>; font-weight: bold;">
                                     <?= $icon ?><?= htmlspecialchars($row['name']) ?>
                                 </td>
-                                <td style="font-weight: bold; color: #f1c40f;">
+                                <td style="font-weight: bold; color: #f1c40f; cursor: help;" title="Score Breakdown:
+Gains: <?= number_format($row['breakdown']['gain'], 1) ?>
+Predictions: <?= number_format($row['breakdown']['pred'], 1) ?>
+Market Beat: <?= number_format($row['breakdown']['market'], 1) ?>
+Winner: <?= number_format($row['breakdown']['winner'], 1) ?>
+Underdog: <?= number_format($row['breakdown']['underdog'], 1) ?>">
                                     <?= number_format($row['score'], 0) ?>
                                 </td>
                                 <td class="<?= $row['ytd'] >= 0 ? 'pos' : 'neg' ?>">
@@ -182,6 +198,33 @@ $months = [
                     </div>
                 <?php endforeach; ?>
             </div>
+        </section>
+
+        <section class="card scoring-rules">
+            <h2>How the Score is Calculated</h2>
+            <div class="rules-grid">
+                <div class="rule-item">
+                    <span class="rule-points">+<?= SCORE_GAIN_MULTIPLIER ?> pts</span>
+                    <span class="rule-desc">per 1% Monthly Gain</span>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-points">-<?= SCORE_PREDICTION_PENALTY ?> pt</span>
+                    <span class="rule-desc">per 1% Prediction Miss (Accuracy)</span>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-points">+<?= SCORE_BEAT_MARKET ?> pts</span>
+                    <span class="rule-desc">for Beating the Market that month</span>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-points">+<?= SCORE_MONTHLY_WINNER ?> pts</span>
+                    <span class="rule-desc">for having the highest Gain that month</span>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-points">+<?= SCORE_UNDERDOG_BONUS ?> pts</span>
+                    <span class="rule-desc">Underdog Bonus (Winner was in last place)</span>
+                </div>
+            </div>
+            <p class="rules-note">Scores are calculated monthly and aggregated into the total score shown on the leaderboard.</p>
         </section>
     </div>
 
