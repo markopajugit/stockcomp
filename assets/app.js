@@ -81,6 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const monthSelect = document.getElementById('month');
         const yearInput = document.getElementById('year');
         const typeSelect = document.getElementById('entry_type');
+        
+        let isCalculating = false;
 
         const updateVisibility = () => {
             const mode = document.querySelector('input[name="input_mode"]:checked').value;
@@ -108,13 +110,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const type = typeSelect.value;
             const targetYTD = parseFloat(ytdInput.value);
 
-            if (!userId || !year || !month || isNaN(targetYTD)) return;
+            if (!userId || !year || !month || isNaN(targetYTD)) {
+                gainInput.value = '';
+                return;
+            }
+
+            isCalculating = true;
+            gainInput.value = 'Calculating...';
+            gainInput.classList.add('calculating');
 
             try {
                 const response = await fetch(`api/get-previous-gains.php?user_id=${userId}&year=${year}&month=${month}&entry_type=${type}`);
                 const data = await response.json();
                 
-                if (data.entries) {
+                if (data.entries !== undefined) {
                     let cumulativeMultiplier = 1.0;
                     data.entries.forEach(entry => {
                         cumulativeMultiplier *= (1 + (parseFloat(entry.gain_percent) / 100));
@@ -123,9 +132,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Monthly = ((1 + YTD/100) / P_{n-1} - 1) * 100
                     const monthlyGain = (((1 + (targetYTD / 100)) / cumulativeMultiplier) - 1) * 100;
                     gainInput.value = monthlyGain.toFixed(2);
+                    
+                    // Show previous YTD info
+                    const previousYTD = (cumulativeMultiplier - 1) * 100;
+                    const infoEl = document.getElementById('ytd-calc-info');
+                    if (infoEl) {
+                        if (data.entries.length > 0) {
+                            infoEl.textContent = `Previous YTD: ${previousYTD.toFixed(2)}% → Calculated monthly gain: ${monthlyGain.toFixed(2)}%`;
+                        } else {
+                            infoEl.textContent = `No previous entries for ${year}. Monthly gain = YTD gain.`;
+                        }
+                        infoEl.style.display = 'block';
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching previous gains:', error);
+                gainInput.value = '';
+            } finally {
+                isCalculating = false;
+                gainInput.classList.remove('calculating');
             }
         };
 
@@ -136,6 +161,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     calculateMonthlyFromYTD();
                 }
             });
+        });
+        
+        // Prevent form submission while calculating
+        entryForm.addEventListener('submit', (e) => {
+            if (isCalculating) {
+                e.preventDefault();
+                alert('Please wait for the monthly gain calculation to complete.');
+            }
         });
     }
 });

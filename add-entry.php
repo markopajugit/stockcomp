@@ -27,9 +27,32 @@ if ($user_id && $year && $month) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input_mode = $_POST['input_mode'] ?? '1m';
     $gain = $_POST['gain_percent'] ?? 0;
+    $ytd_gain = $_POST['ytd_gain'] ?? null;
     $comment = trim($_POST['comment'] ?? '');
     $entry_type = $_POST['entry_type'] ?? 'actual';
+
+    // If YTD mode, calculate the monthly gain from YTD
+    if ($input_mode === 'ytd' && $ytd_gain !== null && $ytd_gain !== '') {
+        $ytd_gain = floatval($ytd_gain);
+        
+        // Fetch all previous months' gains for this user/year/type
+        $stmt = $pdo->prepare("SELECT month, gain_percent FROM entries WHERE user_id = ? AND year = ? AND month < ? AND entry_type = ? ORDER BY month ASC");
+        $stmt->execute([$user_id, $year, $month, $entry_type]);
+        $previous_entries = $stmt->fetchAll();
+        
+        // Calculate cumulative multiplier from previous months
+        $cumulative_multiplier = 1.0;
+        foreach ($previous_entries as $entry) {
+            $cumulative_multiplier *= (1 + (floatval($entry['gain_percent']) / 100));
+        }
+        
+        // Calculate what this month's gain needs to be to achieve the target YTD
+        // Formula: monthly = ((1 + YTD/100) / cumulative_previous - 1) * 100
+        $gain = (((1 + ($ytd_gain / 100)) / $cumulative_multiplier) - 1) * 100;
+        $gain = round($gain, 2);
+    }
 
     if (!$user_id) {
         $error = "User is required.";
@@ -135,6 +158,7 @@ $months = [
                     <label for="ytd_gain">YTD Gain (%)</label>
                     <input type="number" step="0.01" id="ytd_gain" name="ytd_gain" placeholder="e.g. 15.5">
                     <small class="form-text text-muted">Monthly gain will be calculated automatically based on previous months in <?= $year ?>.</small>
+                    <small id="ytd-calc-info" class="form-text ytd-info" style="display: none;"></small>
                 </div>
                 <div class="form-group">
                     <label for="comment">Comments</label>
@@ -144,6 +168,7 @@ $months = [
             </form>
         </main>
     </div>
+    <script src="assets/app.js"></script>
 </body>
 </html>
 
