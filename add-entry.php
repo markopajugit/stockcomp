@@ -4,6 +4,28 @@ require_once 'db.php';
 $message = '';
 $error = '';
 
+// Handle delete request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_entry'])) {
+    $user_id = $_POST['user_id'] ?? null;
+    $year = $_POST['year'] ?? null;
+    $month = $_POST['month'] ?? null;
+    $entry_type = $_POST['entry_type'] ?? null;
+    
+    if ($user_id && $year && $month && $entry_type) {
+        try {
+            $stmt = $pdo->prepare("DELETE FROM entries WHERE user_id = ? AND year = ? AND month = ? AND entry_type = ?");
+            $stmt->execute([$user_id, $year, $month, $entry_type]);
+            if ($stmt->rowCount() > 0) {
+                $message = "Entry deleted successfully!";
+            } else {
+                $error = "No entry found to delete.";
+            }
+        } catch (PDOException $e) {
+            $error = "Error deleting entry: " . $e->getMessage();
+        }
+    }
+}
+
 // Fetch users for dropdown
 $stmt = $pdo->query("SELECT id, name FROM users ORDER BY name ASC");
 $users = $stmt->fetchAll();
@@ -26,7 +48,7 @@ if ($user_id && $year && $month) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_entry'])) {
     $input_mode = $_POST['input_mode'] ?? '1m';
     $gain = $_POST['gain_percent'] ?? 0;
     $ytd_gain = $_POST['ytd_gain'] ?? null;
@@ -93,8 +115,8 @@ $months = [
 <body class="dark-theme">
     <div class="container">
         <header>
-            <h1>Add Monthly Entry</h1>
-            <a href="index.php" class="btn btn-secondary">Back to Dashboard</a>
+            <h1>📊 Add Entry</h1>
+            <a href="index.php" class="btn btn-secondary btn-small">← Back</a>
         </header>
 
         <main>
@@ -105,7 +127,7 @@ $months = [
                 <div class="alert alert-danger"><?= $error ?></div>
             <?php endif; ?>
 
-            <form method="POST" class="card">
+            <form method="POST" class="entry-form">
                 <div class="form-group">
                     <label for="user_id">Your Name</label>
                     <select id="user_id" name="user_id" required>
@@ -115,8 +137,9 @@ $months = [
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="row">
-                    <div class="form-group col">
+
+                <div class="period-selector">
+                    <div class="form-group">
                         <label for="month">Month</label>
                         <select id="month" name="month">
                             <?php foreach ($months as $num => $name): ?>
@@ -124,47 +147,63 @@ $months = [
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="form-group col">
+                    <div class="form-group">
                         <label for="year">Year</label>
                         <input type="number" id="year" name="year" value="<?= $year ?>" min="2020" max="2100">
                     </div>
-                    <div class="form-group col">
-                        <label for="entry_type">Type</label>
-                        <select id="entry_type" name="entry_type">
-                            <option value="actual" <?= $entry_type == 'actual' ? 'selected' : '' ?>>Actual Results</option>
-                            <option value="prediction" <?= $entry_type == 'prediction' ? 'selected' : '' ?>>Prediction</option>
-                        </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="entry_type">Entry Type</label>
+                    <select id="entry_type" name="entry_type">
+                        <option value="actual" <?= $entry_type == 'actual' ? 'selected' : '' ?>>Actual Results</option>
+                        <option value="prediction" <?= $entry_type == 'prediction' ? 'selected' : '' ?>>Prediction</option>
+                    </select>
+                </div>
+
+                <div class="gain-input-section">
+                    <div class="mode-toggle">
+                        <button type="button" class="mode-btn active" data-mode="1m">Monthly</button>
+                        <button type="button" class="mode-btn" data-mode="ytd">YTD</button>
+                    </div>
+                    <input type="hidden" name="input_mode" id="input_mode" value="1m">
+                    
+                    <div class="gain-input-wrapper">
+                        <label id="gain_label" for="gain_input">Monthly Gain</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" id="gain_input" name="gain_percent" value="<?= $existing_gain ?>" required placeholder="0.00">
+                            <span class="unit">%</span>
+                        </div>
+                        <input type="hidden" id="ytd_gain" name="ytd_gain" value="">
+                    </div>
+
+                    <div id="ytd-calc-result" class="calc-result" style="display: none;">
+                        <div class="calc-row">
+                            <span class="calc-label">Previous YTD</span>
+                            <span id="prev-ytd-value" class="calc-value">—</span>
+                        </div>
+                        <div class="calc-row highlight">
+                            <span class="calc-label">Calculated Monthly</span>
+                            <span id="calc-monthly-value" class="calc-value">—</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Input Type</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="input_mode" value="1m" checked> 1M (Monthly)
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="input_mode" value="ytd"> YTD (Year-to-Date)
-                        </label>
-                    </div>
+                    <label for="comment">Comments <span class="optional">(optional)</span></label>
+                    <textarea id="comment" name="comment" rows="2" placeholder="e.g. GOOGL +10%, BTC crash..."><?= htmlspecialchars($existing_comment) ?></textarea>
                 </div>
 
-                <div id="monthly_input_group" class="form-group">
-                    <label for="gain_percent">Monthly Gain (%)</label>
-                    <input type="number" step="0.01" id="gain_percent" name="gain_percent" value="<?= $existing_gain ?>" required placeholder="e.g. 5.25 or -2.1">
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <span class="btn-icon">💾</span> Save Entry
+                    </button>
+                    <?php if ($existing_gain !== ''): ?>
+                        <button type="submit" name="delete_entry" value="1" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this entry?');">
+                            <span class="btn-icon">🗑️</span> Delete
+                        </button>
+                    <?php endif; ?>
                 </div>
-
-                <div id="ytd_input_group" class="form-group" style="display: none;">
-                    <label for="ytd_gain">YTD Gain (%)</label>
-                    <input type="number" step="0.01" id="ytd_gain" name="ytd_gain" placeholder="e.g. 15.5">
-                    <small class="form-text text-muted">Monthly gain will be calculated automatically based on previous months in <?= $year ?>.</small>
-                    <small id="ytd-calc-info" class="form-text ytd-info" style="display: none;"></small>
-                </div>
-                <div class="form-group">
-                    <label for="comment">Comments</label>
-                    <textarea id="comment" name="comment" rows="3" placeholder="e.g. GOOGL +10%, BTC crash..."><?= htmlspecialchars($existing_comment) ?></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Save Entry</button>
             </form>
         </main>
     </div>

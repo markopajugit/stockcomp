@@ -69,55 +69,82 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Entry Form Logic
+    // Entry Form Logic - New unified input design
     const entryForm = document.querySelector('form[method="POST"]');
     if (entryForm) {
-        const inputModes = document.querySelectorAll('input[name="input_mode"]');
-        const monthlyGroup = document.getElementById('monthly_input_group');
-        const ytdGroup = document.getElementById('ytd_input_group');
-        const gainInput = document.getElementById('gain_percent');
-        const ytdInput = document.getElementById('ytd_gain');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const inputModeHidden = document.getElementById('input_mode');
+        const gainInput = document.getElementById('gain_input');
+        const gainLabel = document.getElementById('gain_label');
+        const ytdHiddenInput = document.getElementById('ytd_gain');
+        const calcResult = document.getElementById('ytd-calc-result');
+        const prevYtdValue = document.getElementById('prev-ytd-value');
+        const calcMonthlyValue = document.getElementById('calc-monthly-value');
         const userIdSelect = document.getElementById('user_id');
         const monthSelect = document.getElementById('month');
         const yearInput = document.getElementById('year');
         const typeSelect = document.getElementById('entry_type');
         
         let isCalculating = false;
+        let currentMode = '1m';
+        let storedMonthlyValue = gainInput ? gainInput.value : '';
+        let storedYtdValue = '';
 
-        const updateVisibility = () => {
-            const mode = document.querySelector('input[name="input_mode"]:checked').value;
+        const updateMode = (mode) => {
+            currentMode = mode;
+            inputModeHidden.value = mode;
+            
+            modeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
             if (mode === 'ytd') {
-                ytdGroup.style.display = 'block';
-                gainInput.readOnly = true;
-                gainInput.classList.add('readonly-input');
-                ytdInput.required = true;
+                // Switching to YTD mode
+                storedMonthlyValue = gainInput.value; // Save current monthly value
+                gainLabel.textContent = 'Target YTD';
+                gainInput.placeholder = '0.00';
+                gainInput.value = storedYtdValue; // Restore YTD value if any
+                calcResult.style.display = 'block';
+                
+                // Trigger calculation if we have a value
+                if (storedYtdValue) {
+                    calculateMonthlyFromYTD();
+                } else {
+                    prevYtdValue.textContent = '—';
+                    calcMonthlyValue.textContent = '—';
+                }
             } else {
-                ytdGroup.style.display = 'none';
-                gainInput.readOnly = false;
-                gainInput.classList.remove('readonly-input');
-                ytdInput.required = false;
+                // Switching to Monthly mode
+                storedYtdValue = gainInput.value; // Save current YTD value
+                gainLabel.textContent = 'Monthly Gain';
+                gainInput.placeholder = '0.00';
+                gainInput.value = storedMonthlyValue; // Restore monthly value
+                calcResult.style.display = 'none';
+                ytdHiddenInput.value = '';
             }
         };
 
-        inputModes.forEach(radio => {
-            radio.addEventListener('change', updateVisibility);
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                updateMode(btn.dataset.mode);
+            });
         });
 
         const calculateMonthlyFromYTD = async () => {
-            const userId = userIdSelect.value;
-            const year = yearInput.value;
-            const month = monthSelect.value;
-            const type = typeSelect.value;
-            const targetYTD = parseFloat(ytdInput.value);
+            const userId = userIdSelect?.value;
+            const year = yearInput?.value;
+            const month = monthSelect?.value;
+            const type = typeSelect?.value;
+            const targetYTD = parseFloat(gainInput.value);
 
             if (!userId || !year || !month || isNaN(targetYTD)) {
-                gainInput.value = '';
+                prevYtdValue.textContent = '—';
+                calcMonthlyValue.textContent = '—';
                 return;
             }
 
             isCalculating = true;
-            gainInput.value = 'Calculating...';
-            gainInput.classList.add('calculating');
+            calcMonthlyValue.textContent = '...';
 
             try {
                 const response = await fetch(`api/get-previous-gains.php?user_id=${userId}&year=${year}&month=${month}&entry_type=${type}`);
@@ -131,43 +158,56 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Monthly = ((1 + YTD/100) / P_{n-1} - 1) * 100
                     const monthlyGain = (((1 + (targetYTD / 100)) / cumulativeMultiplier) - 1) * 100;
-                    gainInput.value = monthlyGain.toFixed(2);
-                    
-                    // Show previous YTD info
                     const previousYTD = (cumulativeMultiplier - 1) * 100;
-                    const infoEl = document.getElementById('ytd-calc-info');
-                    if (infoEl) {
-                        if (data.entries.length > 0) {
-                            infoEl.textContent = `Previous YTD: ${previousYTD.toFixed(2)}% → Calculated monthly gain: ${monthlyGain.toFixed(2)}%`;
-                        } else {
-                            infoEl.textContent = `No previous entries for ${year}. Monthly gain = YTD gain.`;
-                        }
-                        infoEl.style.display = 'block';
-                    }
+                    
+                    // Update display
+                    prevYtdValue.textContent = previousYTD.toFixed(2) + '%';
+                    calcMonthlyValue.textContent = (monthlyGain >= 0 ? '+' : '') + monthlyGain.toFixed(2) + '%';
+                    
+                    // Store calculated monthly for form submission
+                    storedMonthlyValue = monthlyGain.toFixed(2);
+                    ytdHiddenInput.value = targetYTD;
                 }
             } catch (error) {
                 console.error('Error fetching previous gains:', error);
-                gainInput.value = '';
+                prevYtdValue.textContent = 'Error';
+                calcMonthlyValue.textContent = 'Error';
             } finally {
                 isCalculating = false;
-                gainInput.classList.remove('calculating');
             }
         };
 
-        ytdInput.addEventListener('input', calculateMonthlyFromYTD);
-        [userIdSelect, monthSelect, yearInput, typeSelect].forEach(el => {
-            el.addEventListener('change', () => {
-                if (document.querySelector('input[name="input_mode"]:checked').value === 'ytd') {
+        // Handle input changes based on mode
+        if (gainInput) {
+            gainInput.addEventListener('input', () => {
+                if (currentMode === 'ytd') {
                     calculateMonthlyFromYTD();
                 }
             });
+        }
+
+        // Recalculate when changing user/month/year/type in YTD mode
+        [userIdSelect, monthSelect, yearInput, typeSelect].forEach(el => {
+            if (el) {
+                el.addEventListener('change', () => {
+                    if (currentMode === 'ytd') {
+                        calculateMonthlyFromYTD();
+                    }
+                });
+            }
         });
         
-        // Prevent form submission while calculating
+        // Handle form submission
         entryForm.addEventListener('submit', (e) => {
             if (isCalculating) {
                 e.preventDefault();
-                alert('Please wait for the monthly gain calculation to complete.');
+                alert('Please wait for the calculation to complete.');
+                return;
+            }
+            
+            // In YTD mode, swap the value to the calculated monthly
+            if (currentMode === 'ytd' && storedMonthlyValue) {
+                gainInput.value = storedMonthlyValue;
             }
         });
     }
